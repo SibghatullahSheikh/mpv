@@ -101,9 +101,30 @@
     [self setFrame:NSInsetRect(f, dx/2, dy/2) display:NO animate:NO];
 }
 
-- (void)setFrame:(NSRect)frame display:(BOOL)display animate:(BOOL)animate
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen {
+    if([self isInFullScreenMode]) return frameRect;
+    
+    screen = screen ?: self.screen ?: [NSScreen mainScreen];
+    NSRect vf = [screen visibleFrame];
+    
+    if(NSMinX(frameRect) >= NSMaxX(vf) || NSMaxX(frameRect) <= NSMinX(vf))
+        frameRect.origin.x = NSMidX(vf) - NSWidth(frameRect)/2;
+    if(NSMinY(frameRect) >= NSMaxY(vf) || NSMaxY(frameRect) <= NSMinY(vf))
+        frameRect.origin.y = NSMidY(vf) - NSHeight(frameRect)/2;
+    
+    if(NSMaxY(frameRect) > NSMaxY(vf))
+        frameRect.origin.y -= NSMaxY(frameRect) - NSMaxY(vf);
+    
+    NSRect cr = [self contentRectForFrameRect:frameRect];
+    if(NSMaxY(cr) < NSMinY(vf))
+        frameRect.origin.y += NSMinY(vf) - NSMaxY(cr);
+    
+    return frameRect;
+}
+
+- (void)windowDidEndLiveResize:(NSNotification *)notification
 {
-    [super setFrame:frame display:display animate:animate];
+    [self setFrame:[self constrainFrameRect:self.frame toScreen:self.screen] display:NO];
 }
 
 - (void)queueNewVideoSize:(NSSize)new_size
