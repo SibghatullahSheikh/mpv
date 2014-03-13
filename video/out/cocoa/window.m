@@ -127,15 +127,19 @@
     [self setFrame:[self constrainFrameRect:self.frame toScreen:self.screen] display:NO];
 }
 
+- (void)applyQueuedVideoSize
+{
+    [self setCenteredContentSize:self->_queued_video_size];
+    [self setContentAspectRatio:self->_queued_video_size];
+}
+
 - (void)queueNewVideoSize:(NSSize)new_size
 {
     if (CGSizeEqualToSize(self->_queued_video_size, new_size)) return;
     self->_queued_video_size = new_size;
 
-    if (![self.adapter isInFullScreenMode]) {
-        [self setCenteredContentSize:self->_queued_video_size];
-        [self setContentAspectRatio:self->_queued_video_size];
-    }
+    if (![self.adapter isInFullScreenMode])
+        [self applyQueuedVideoSize];
 }
 
 - (NSSize)window:(NSWindow *)window willUseFullScreenContentSize:(NSSize)size {
@@ -154,8 +158,7 @@
     [self setContentResizeIncrements:NSMakeSize(1, 1)];
 }
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-    [self setCenteredContentSize:self->_queued_video_size];
-    [self setContentAspectRatio:self->_queued_video_size];
+    [self applyQueuedVideoSize];
 }
 
 @end
