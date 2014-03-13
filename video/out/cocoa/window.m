@@ -132,7 +132,7 @@
     if (CGSizeEqualToSize(self->_queued_video_size, new_size)) return;
     self->_queued_video_size = new_size;
 
-    if (![self isInFullScreenMode]) {
+    if (![self.adapter isInFullScreenMode]) {
         [self setCenteredContentSize:self->_queued_video_size];
         [self setContentAspectRatio:self->_queued_video_size];
     }
