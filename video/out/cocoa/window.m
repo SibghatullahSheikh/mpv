@@ -102,23 +102,23 @@
 }
 
 - (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen {
-    
     if([self.adapter isInFullScreenMode]) return frameRect;
+
     screen = screen ?: self.screen ?: [NSScreen mainScreen];
     NSRect vf = [screen visibleFrame];
-    
+
     if(NSMinX(frameRect) >= NSMaxX(vf) || NSMaxX(frameRect) <= NSMinX(vf))
         frameRect.origin.x = NSMidX(vf) - NSWidth(frameRect)/2;
     if(NSMinY(frameRect) >= NSMaxY(vf) || NSMaxY(frameRect) <= NSMinY(vf))
         frameRect.origin.y = NSMidY(vf) - NSHeight(frameRect)/2;
-    
+
     if(NSMaxY(frameRect) > NSMaxY(vf))
         frameRect.origin.y -= NSMaxY(frameRect) - NSMaxY(vf);
-    
+
     NSRect cr = [self contentRectForFrameRect:frameRect];
     if(NSMaxY(cr) < NSMinY(vf))
         frameRect.origin.y += NSMinY(vf) - NSMaxY(cr);
-    
+
     return frameRect;
 }
 
