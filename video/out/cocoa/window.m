@@ -30,8 +30,6 @@
 
 @implementation MpvVideoWindow {
     NSSize _queued_video_size;
-    bool   _fs_resize_scheduled;
-    bool   _recenter_window_during_constraint;
 }
 
 @synthesize adapter = _adapter;
@@ -66,16 +64,9 @@
 
 - (void)setFullScreen:(BOOL)willBeFullscreen
 {
-    if (willBeFullscreen && ![self isInFullScreenMode]) {
-        [self setContentResizeIncrements:NSMakeSize(1, 1)];
+    if (willBeFullscreen != [self isInFullScreenMode]) {
         [self toggleFullScreen:nil];
     }
-
-    if (!willBeFullscreen && [self isInFullScreenMode]) {
-        [self setContentAspectRatio:self->_queued_video_size];
-        [self toggleFullScreen:nil];
-    }
-
 }
 
 - (BOOL)canBecomeMainWindow { return YES; }
@@ -101,70 +92,50 @@
     [self.adapter putCommand:cmd];
 }
 
-- (int)titleHeight
-{
-    NSRect of    = [self frame];
-    NSRect cb    = [[self contentView] bounds];
-    return of.size.height - cb.size.height;
-}
-
 - (void)setCenteredContentSize:(NSSize)ns
 {
     NSRect f   = [self frame];
-    CGFloat dx = (f.size.width  - ns.width) / 2;
-    CGFloat dy = (f.size.height - ns.height - [self titleHeight]) / 2;
-    NSRect nf  = NSRectFromCGRect(CGRectInset(NSRectToCGRect(f), dx, dy));
-    self->_recenter_window_during_constraint = true;
-    [self setFrame:nf display:NO animate:NO];
-}
-
-- (NSRect)constrainFrameRect:(NSRect)nf toScreen:(NSScreen *)screen
-{
-    NSRect s = [[self screen] visibleFrame];
-    if (nf.origin.y + nf.size.height > s.origin.y + s.size.height) {
-        if (self->_recenter_window_during_constraint)
-            nf.size.height = s.size.height;
-        nf.origin.y = s.origin.y + s.size.height - nf.size.height;
-    }
-    return nf;
+    NSRect nf  = [self frameRectForContentRect:NSMakeRect(0, 0, ns.width, ns.height)];
+    CGFloat dx = f.size.width  - nf.size.width;
+    CGFloat dy = f.size.height - nf.size.height;
+    [self setFrame:NSInsetRect(f, dx/2, dy/2) display:NO animate:NO];
 }
 
 - (void)setFrame:(NSRect)frame display:(BOOL)display animate:(BOOL)animate
 {
     [super setFrame:frame display:display animate:animate];
-    self->_recenter_window_during_constraint = false;
 }
 
 - (void)queueNewVideoSize:(NSSize)new_size
 {
-    NSSize prev_size = self->_queued_video_size;
+    if (CGSizeEqualToSize(self->_queued_video_size, new_size)) return;
     self->_queued_video_size = new_size;
 
-    if (!CGSizeEqualToSize(prev_size, new_size))
-        [self dispatchNewVideoSize];
-}
-
-- (void)dispatchNewVideoSize
-{
-    if ([self.adapter isInFullScreenMode]) {
-        self->_fs_resize_scheduled = true;
-    } else {
-        [self applyNewVideoSize];
+    if (![self isInFullScreenMode]) {
+        [self setCenteredContentSize:self->_queued_video_size];
+        [self setContentAspectRatio:self->_queued_video_size];
     }
 }
 
-- (void)applyNewVideoSize
-{
+- (NSSize)window:(NSWindow *)window willUseFullScreenContentSize:(NSSize)size {
+    return window.screen.frame.size;
+}
+
+- (NSApplicationPresentationOptions)window:(NSWindow *)window
+      willUseFullScreenPresentationOptions:(NSApplicationPresentationOptions)opts {
+    return NSApplicationPresentationFullScreen      |
+           NSApplicationPresentationAutoHideDock    |
+           NSApplicationPresentationAutoHideMenuBar |
+           NSApplicationPresentationAutoHideToolbar;
+}
+
+- (void)windowWillEnterFullScreen:(NSNotification *)notification {
+    [self setContentResizeIncrements:NSMakeSize(1, 1)];
+}
+- (void)windowDidExitFullScreen:(NSNotification *)notification {
     [self setCenteredContentSize:self->_queued_video_size];
     [self setContentAspectRatio:self->_queued_video_size];
 }
 
-- (void)didChangeFullScreenState
-{
-    if (![self.adapter isInFullScreenMode] && self->_fs_resize_scheduled) {
-        self->_fs_resize_scheduled = false;
-        [self applyNewVideoSize];
-    }
-}
 @end
 

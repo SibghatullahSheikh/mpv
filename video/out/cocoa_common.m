@@ -304,7 +304,6 @@ static void create_window(struct vo *vo, uint32_t d_width, uint32_t d_height,
     if (opts->native_fs) {
         [s->window setCollectionBehavior:
             NSWindowCollectionBehaviorFullScreenPrimary];
-        [NSApp setPresentationOptions:NSFullScreenWindowMask];
     }
 }
 
@@ -502,8 +501,6 @@ static void vo_cocoa_fullscreen(struct vo *vo)
     } else {
         [s->view setFullScreen:opts->fullscreen];
     }
-
-    [s->window didChangeFullScreenState];
 
     // Make the core aware of the view size change.
     resize_window(vo);

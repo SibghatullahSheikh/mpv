@@ -27,8 +27,4 @@
 - (void)setCenteredContentSize:(NSSize)newSize;
 
 - (void)queueNewVideoSize:(NSSize)newSize;
-- (void)dispatchNewVideoSize;
-
-// This really needs to use KVO
-- (void)didChangeFullScreenState;
 @end
