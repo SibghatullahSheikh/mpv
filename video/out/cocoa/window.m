@@ -102,8 +102,8 @@
 }
 
 - (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen {
-    if([self isInFullScreenMode]) return frameRect;
     
+    if([self.adapter isInFullScreenMode]) return frameRect;
     screen = screen ?: self.screen ?: [NSScreen mainScreen];
     NSRect vf = [screen visibleFrame];
     
